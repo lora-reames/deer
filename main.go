@@ -23,17 +23,17 @@ type deer struct {
 	y          int
 	distance   int
 	count      int
-	min        int
 	max        int
-	state      int
+	// state      string
 	sprite     string
 	lastSprite string
+	lastSpriteCount int
 	img        *ebiten.Image
 }
 
 type Config struct {
-	Speed int     `cfg:"speed" cfgDefault:"2" cfgHelper:"The speed of the deer."`
-	Scale float64 `cfg:"scale" cfgDefault:"2.0" cfgHelper:"The scale of the deer."`
+	Speed int     `cfg:"speed" cfgDefault:"4" cfgHelper:"The speed of the deer."`
+	Scale float64 `cfg:"scale" cfgDefault:"4.0" cfgHelper:"The scale of the deer."`
 	// Quiet            bool    `cfg:"quiet" cfgDefault:"false" cfgHelper:"Disable sound."`
 	MousePassthrough bool `cfg:"mousepassthrough" cfgDefault:"false" cfgHelper:"Enable mouse passthrough."`
 }
@@ -44,70 +44,15 @@ const (
 )
 
 var (
-	// loaded  = false
-	// mSprite map[string]*ebiten.Image
 	//go:embed deer.png
 	Deer_png       []byte
 	spriteSheet, _ = LoadSpriteSheet()
-
 	monitorWidth, monitorHeight = ebiten.Monitor().Size()
-
 	cfg = &Config{}
 )
 
 // SpriteSheet represents a collection of sprite images.
 type SpriteSheet map[string]*ebiten.Image
-
-// {
-// 	StandingFrontTaillUp       *ebiten.Image
-// 	StandingFrontTailDown      *ebiten.Image
-// 	StandingFrontLegUpTailUp   *ebiten.Image
-// 	StandingFrontLegUpTailDown *ebiten.Image
-// 	StandingBackTaillUp        *ebiten.Image
-// 	StandingBackTailDown       *ebiten.Image
-// 	StandingBackLegUpTailUp    *ebiten.Image
-// 	StandingBackLegUpTailDown  *ebiten.Image
-// 	StandingRightTaillUp       *ebiten.Image
-// 	StandingRightTailDown      *ebiten.Image
-// 	StandingRightLegUpTailUp   *ebiten.Image
-// 	StandingRightLegUpTailDown *ebiten.Image
-// 	StandingLeftTaillUp        *ebiten.Image
-// 	StandingLeftTailDown       *ebiten.Image
-// 	StandingLeftLegUpTailUp    *ebiten.Image
-// 	StandingLeftLegUpTailDown  *ebiten.Image
-// 	WalkingForward1            *ebiten.Image
-// 	WalkingForward2            *ebiten.Image
-// 	WalkingForward3            *ebiten.Image
-// 	WalkingForward4            *ebiten.Image
-// 	WalkingAway1               *ebiten.Image
-// 	WalkingAway2               *ebiten.Image
-// 	WalkingAway3               *ebiten.Image
-// 	WalkingAway4               *ebiten.Image
-// 	WalkingRight1              *ebiten.Image
-// 	WalkingRight2              *ebiten.Image
-// 	WalkingRight3              *ebiten.Image
-// 	WalkingRight4              *ebiten.Image
-// 	WalkingLeft1               *ebiten.Image
-// 	WalkingLeft2               *ebiten.Image
-// 	WalkingLeft3               *ebiten.Image
-// 	WalkingLeft4               *ebiten.Image
-// 	JumpingLeft1               *ebiten.Image
-// 	JumpingLeft2               *ebiten.Image
-// 	JumpingLeft3               *ebiten.Image
-// 	JumpingLeft4               *ebiten.Image
-// 	JumpingRight1              *ebiten.Image
-// 	JumpingRight2              *ebiten.Image
-// 	JumpingRight3              *ebiten.Image
-// 	JumpingRight4              *ebiten.Image
-// 	JumpingForward1            *ebiten.Image
-// 	JumpingForward2            *ebiten.Image
-// 	JumpingForward3            *ebiten.Image
-// 	JumpingForward4            *ebiten.Image
-// 	JumpingAway1               *ebiten.Image
-// 	JumpingAway2               *ebiten.Image
-// 	JumpingAway3               *ebiten.Image
-// 	JumpingAway4               *ebiten.Image
-// }
 
 // LoadSpriteSheet loads the embedded SpriteSheet.
 func LoadSpriteSheet() (SpriteSheet, error) {
@@ -258,67 +203,142 @@ func (m *deer) Update() error {
 // }
 
 func (m *deer) catchCursor(x, y int) {
-	m.state = 0
-	m.min = 8
-	m.max = 16
-	tr := 0.0
+	// m.state = 0
+	// m.max = 16
+	turn := 0.0
 	// get mouse direction
-	r := math.Atan2(float64(y), float64(x))
-	if r <= 0 {
-		tr = 360
+	rad := math.Atan2(float64(y), float64(x))
+	if rad <= 0 {
+		turn = 360
 	}
 
-	a := (r / math.Pi * 180) + tr
-
-	switch {
-	case a <= 292.5 && a > 247.5: // up
-		m.y -= cfg.Speed
-	case a <= 337.5 && a > 292.5: // up right
-		m.x += cfg.Speed
-		m.y -= cfg.Speed
-	case a <= 22.5 || a > 337.5: // right
-		m.x += cfg.Speed
-	case a <= 67.5 && a > 22.5: // down right
-		m.x += cfg.Speed
-		m.y += cfg.Speed
-	case a <= 112.5 && a > 67.5: // down
-		m.y += cfg.Speed
-	case a <= 157.5 && a > 112.5: // down left
-		m.x -= cfg.Speed
-		m.y += cfg.Speed
-	case a <= 202.5 && a > 157.5: // left
-		m.x -= cfg.Speed
-	case a <= 247.5 && a > 202.5: // up left
-		m.x -= cfg.Speed
-		m.y -= cfg.Speed
-	}
+	angle := (rad / math.Pi * 180) + turn
 
 	switch {
-	case a < 292 && a > 247:
-		m.sprite = "WalkingAway1"
-		// m.img = spriteSheet.WalkingAway1
-	case a < 337 && a > 292:
-		m.sprite = "JumpingRight1"
-		// m.img = spriteSheet.JumpingRight1
-	case a < 22 || a > 337:
-		m.sprite = "WalkingRight1"
-		// m.img = spriteSheet.WalkingRight1
-	case a < 67 && a > 22:
-		m.sprite = "JumpingRight3"
-		// m.img = spriteSheet.JumpingRight3
-	case a < 112 && a > 67:
-		m.sprite = "WalkingForward1"
-		// m.img = spriteSheet.WalkingForward1
-	case a < 157 && a > 112:
-		m.sprite = "JumpingLeft3"
-		// m.img = spriteSheet.JumpingLeft3
-	case a < 202 && a > 157:
-		m.sprite = "WalkingLeft1"
-		// m.img = spriteSheet.WalkingLeft1
-	case a < 247 && a > 202:
-		m.sprite = "JumpingLeft1"
-		// m.img = spriteSheet.JumpingLeft1
+	case angle <= 292.5 && angle > 247.5: // up
+		m.y -= cfg.Speed
+	case angle <= 337.5 && angle > 292.5: // up right
+		m.x += cfg.Speed
+		m.y -= cfg.Speed
+	case angle <= 22.5 || angle > 337.5: // right
+		m.x += cfg.Speed
+	case angle <= 67.5 && angle > 22.5: // down right
+		m.x += cfg.Speed
+		m.y += cfg.Speed
+	case angle <= 112.5 && angle > 67.5: // down
+		m.y += cfg.Speed
+	case angle <= 157.5 && angle > 112.5: // down left
+		m.x -= cfg.Speed
+		m.y += cfg.Speed
+	case angle <= 202.5 && angle > 157.5: // left
+		m.x -= cfg.Speed
+	case angle <= 247.5 && angle > 202.5: // up left
+		m.x -= cfg.Speed
+		m.y -= cfg.Speed
 	}
+
+
+	var lastSpriteDiff = m.count - m.lastSpriteCount
+
+	var lastSpriteMinDiff = lastSpriteDiff > 5
+	if (lastSpriteMinDiff) {
+		switch {
+		case angle < 292 && angle > 247:
+			// m.state = "WalkingUp"
+			switch m.lastSprite {
+				case "WalkingAway1":
+					m.sprite = "WalkingAway2"
+				case "WalkingAway2":
+					m.sprite = "WalkingAway3"
+				case "WalkingAway3":
+					m.sprite = "WalkingAway4"
+				default:
+					m.sprite = "WalkingAway1"
+				}
+		case angle < 337 && angle > 292:
+			switch m.lastSprite {
+				case "JumpingRight1":
+					m.sprite = "JumpingRight2"
+				case "JumpingRight2":
+					m.sprite = "JumpingRight3"
+				case "JumpingRight3":
+					m.sprite = "JumpingRight4"
+				default:
+					m.sprite = "JumpingRight1"
+				}
+		case angle < 22 || angle > 337:
+			switch m.lastSprite {
+				case "WalkingRight1":
+					m.sprite = "WalkingRight2"
+				case "WalkingRight2":
+					m.sprite = "WalkingRight3"
+				case "WalkingRight3":
+					m.sprite = "WalkingRight4"
+				default:
+					m.sprite = "WalkingRight1"
+				}
+		case angle < 67 && angle > 22:
+			// m.sprite = "JumpingRight3"
+			switch m.lastSprite {
+				case "JumpingRight1":
+					m.sprite = "JumpingRight2"
+				case "JumpingRight2":
+					m.sprite = "JumpingRight3"
+				case "JumpingRight3":
+					m.sprite = "JumpingRight4"
+				default:
+					m.sprite = "JumpingRight1"
+				}
+			
+		case angle < 112 && angle > 67:
+			switch m.lastSprite {
+				case "WalkingForward1":
+					m.sprite = "WalkingForward2"
+				case "WalkingForward2":
+					m.sprite = "WalkingForward3"
+				case "WalkingForward3":
+					m.sprite = "WalkingForward4"
+				default:
+					m.sprite = "WalkingForward1"
+				}
+		case angle < 157 && angle > 112:
+			// m.sprite = "JumpingLeft3"
+			switch m.lastSprite {
+				case "JumpingLeft1":
+					m.sprite = "JumpingLeft2"
+				case "JumpingLeft2":
+					m.sprite = "JumpingLeft3"
+				case "JumpingLeft3":
+					m.sprite = "JumpingLeft4"
+				default:
+					m.sprite = "JumpingLeft1"
+				}
+		case angle < 202 && angle > 157:
+			switch m.lastSprite {
+				case "WalkingLeft1":
+					m.sprite = "WalkingLeft2"
+				case "WalkingLeft2":
+					m.sprite = "WalkingLeft3"
+				case "WalkingLeft3":
+					m.sprite = "WalkingLeft4"
+				default:
+					m.sprite = "WalkingLeft1"
+				}
+		case angle < 247 && angle > 202:
+			// m.sprite = "JumpingLeft1"
+			switch m.lastSprite {
+				case "JumpingLeft1":
+					m.sprite = "JumpingLeft2"
+				case "JumpingLeft2":
+					m.sprite = "JumpingLeft3"
+				case "JumpingLeft3":
+					m.sprite = "JumpingLeft4"
+				default:
+					m.sprite = "JumpingLeft1"
+				}
+		}
+	}
+
 }
 
 func (m *deer) Draw(screen *ebiten.Image) {
@@ -337,6 +357,7 @@ func (m *deer) Draw(screen *ebiten.Image) {
 
 	// if m.count > m.max {
 	// 	m.count = 0
+	// }
 
 	// 	if m.state > 0 {
 	// 		m.state++
@@ -352,6 +373,8 @@ func (m *deer) Draw(screen *ebiten.Image) {
 	}
 
 	m.lastSprite = m.sprite
+	m.lastSpriteCount = m.count
+
 
 	screen.Clear()
 
@@ -367,8 +390,7 @@ func main() {
 		x:      monitorWidth / 2,
 		y:      monitorHeight / 2,
 		sprite: "WalkingForward1",
-		min:    8,
-		max:    16,
+		max:    200,
 	}
 
 	ebiten.SetRunnableOnUnfocused(true)
