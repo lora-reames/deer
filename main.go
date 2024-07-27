@@ -134,6 +134,8 @@ func LoadSpriteSheet() (SpriteSheet, error) {
 		"JumpingAway2": spriteAt(5, 5),
 		"JumpingAway3": spriteAt(6, 5),
 		"JumpingAway4": spriteAt(7, 5),
+
+		"HeadLookingForward": spriteAt(4,0),
 	}
 
 	return s, nil
@@ -165,7 +167,7 @@ func (m *deer) Update() error {
 
 	m.distance = dx + dy
 	if m.distance < width || m.waiting {
-		// m.stayIdle()
+		m.stayIdle()
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			m.waiting = !m.waiting
 		}
@@ -176,31 +178,32 @@ func (m *deer) Update() error {
 	return nil
 }
 
-// func (m *deer) stayIdle() {
-// 	// idle state
-// 	switch m.state {
-// 	case 0:
-// 		m.state = 1
-// 		fallthrough
+func (m *deer) stayIdle() {
+	m.sprite = "JumpingForward4"
+	// idle state
+	// switch m.state {
+	// case 0:
+	// 	m.state = 1
+	// 	fallthrough
 
-// 	case 1, 2, 3:
-// 		m.sprite = "awake"
+	// case 1, 2, 3:
+	// 	m.sprite = "awake"
 
-// 	case 4, 5, 6:
-// 		m.sprite = "scratch"
+	// case 4, 5, 6:
+	// 	m.sprite = "scratch"
 
-// 	case 7, 8, 9:
-// 		m.sprite = "wash"
+	// case 7, 8, 9:
+	// 	m.sprite = "wash"
 
-// 	case 10, 11, 12:
-// 		m.min = 32
-// 		m.max = 64
-// 		m.sprite = "yawn"
+	// case 10, 11, 12:
+	// 	m.min = 32
+	// 	m.max = 64
+	// 	m.sprite = "yawn"
 
-// 	default:
-// 		m.sprite = "sleep"
-// 	}
-// }
+	// default:
+	// 	m.sprite = "sleep"
+	// }
+}
 
 func (m *deer) catchCursor(x, y int) {
 	// m.state = 0
