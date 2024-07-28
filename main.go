@@ -188,13 +188,13 @@ func (m *deer) stayIdle() {
 		if m.count - m.lastSpriteCount > rand.Intn(200) + 50 {
 			var random = rand.Intn(15)
 			switch {
-			case 0 < random && random < 2:
+			case 0 <= random && random < 2:
 				m.sprite = "StandingFrontTailUp+HeadLookingForward1"
-			case 2 < random && random < 5:
+			case 2 <= random && random < 5:
 				m.sprite = "StandingFrontTailDown+HeadLookingForward2"
-			case random > 5 && random < 7:
+			case 5 <= random && random < 7:
 				m.sprite = "StandingFrontTailUp+HeadLookingForward2"
-			case random > 7 && random < 9:
+			case 7 <= random && random < 9:
 				m.sprite = "StandingFrontLegUpTailUp+HeadLookingRight"
 			case random == 9:
 				m.sprite = "StandingFrontTailDown+HeadDownForward"
