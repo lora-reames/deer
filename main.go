@@ -34,7 +34,7 @@ type deer struct {
 
 type Config struct {
 	Speed int     `cfg:"speed" cfgDefault:"4" cfgHelper:"The speed of the deer."`
-	Scale float64 `cfg:"scale" cfgDefault:"4.0" cfgHelper:"The scale of the deer."`
+	Scale float64 `cfg:"scale" cfgDefault:"3.0" cfgHelper:"The scale of the deer."`
 	// Quiet            bool    `cfg:"quiet" cfgDefault:"false" cfgHelper:"Disable sound."`
 	MousePassthrough bool `cfg:"mousepassthrough" cfgDefault:"false" cfgHelper:"Enable mouse passthrough."`
 }
