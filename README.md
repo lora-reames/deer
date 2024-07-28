@@ -10,7 +10,6 @@ Built with [Go](https://go.dev), [Ebitengine](https://github.com/hajimehoshi/ebi
 
 https://github.com/user-attachments/assets/e0dd3809-0cab-4f46-a5ab-85547ebc522f
 
-
 ### Art Credit
 
 The deer was created by ["Seliel the Shaper"](https://seliel-the-shaper.itch.io/) for their ManaSeed series of game assets and was purchased on [itch.io](https://seliel-the-shaper.itch.io/animated-deer).
