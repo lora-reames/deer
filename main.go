@@ -7,6 +7,8 @@ import (
 	_ "image/png"
 	"log"
 	"math"
+	"math/rand"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 
@@ -23,8 +25,7 @@ type deer struct {
 	y          int
 	distance   int
 	count      int
-	max        int
-	// state      string
+	state      string
 	sprite     string
 	lastSprite string
 	lastSpriteCount int
@@ -57,6 +58,7 @@ type SpriteSheet map[string]*ebiten.Image
 // LoadSpriteSheet loads the embedded SpriteSheet.
 func LoadSpriteSheet() (SpriteSheet, error) {
 	var tileSize = 32
+	var halfTileSize = 16
 
 	img, _, err := image.Decode(bytes.NewReader(Deer_png))
 	if err != nil {
@@ -66,76 +68,79 @@ func LoadSpriteSheet() (SpriteSheet, error) {
 	sheet := ebiten.NewImageFromImage(img)
 
 	// spriteAt returns a sprite at the provided coordinates.
-	spriteAt := func(x, y int) *ebiten.Image {
-		return sheet.SubImage(image.Rect(x*tileSize, (y+1)*tileSize, (x+1)*tileSize, y*tileSize)).(*ebiten.Image)
+	spriteAt := func(x, y, xSize,ySize int) *ebiten.Image {
+		return sheet.SubImage(image.Rect(x*xSize, (y+1)*ySize, (x+1)*xSize, y*ySize)).(*ebiten.Image)
 	}
 
 	// Populate SpriteSheet.
 
 	s := SpriteSheet{
-		"StandingFrontTailUp": spriteAt(0, 0),
+		"StandingFrontTailUp":       spriteAt(0, 0, tileSize, tileSize),
+		"StandingFrontTailDown":      spriteAt(1, 0, tileSize, tileSize),
+		"StandingFrontLegUpTailDown": spriteAt(2, 0, tileSize, tileSize),
+		"StandingFrontLegUpTailUp":   spriteAt(3, 0, tileSize, tileSize),
 
-		"StandingFrontTaillUp":       spriteAt(0, 0),
-		"StandingFrontTailDown":      spriteAt(1, 0),
-		"StandingFrontLegUpTailDown": spriteAt(2, 0),
-		"StandingFrontLegUpTailUp":   spriteAt(3, 0),
+		"StandingBackTailUp":       spriteAt(0, 1, tileSize, tileSize),
+		"StandingBackTailDown":      spriteAt(1, 1, tileSize, tileSize),
+		"StandingBackLegUpTailUp":   spriteAt(2, 1, tileSize, tileSize),
+		"StandingBackLegUpTailDown": spriteAt(3, 1, tileSize, tileSize),
 
-		"StandingBackTaillUp":       spriteAt(0, 1),
-		"StandingBackTailDown":      spriteAt(1, 1),
-		"StandingBackLegUpTailUp":   spriteAt(2, 1),
-		"StandingBackLegUpTailDown": spriteAt(3, 1),
+		"StandingRightTailUp":       spriteAt(0, 3, tileSize, tileSize),
+		"StandingRightTailDown":      spriteAt(1, 3, tileSize, tileSize),
+		"StandingRightLegUpTailUp":   spriteAt(2, 3, tileSize, tileSize),
+		"StandingRightLegUpTailDown": spriteAt(3, 3, tileSize, tileSize),
 
-		"StandingRightTaillUp":       spriteAt(0, 3),
-		"StandingRightTailDown":      spriteAt(1, 3),
-		"StandingRightLegUpTailUp":   spriteAt(2, 3),
-		"StandingRightLegUpTailDown": spriteAt(3, 3),
+		"StandingLeftTailUp":       spriteAt(0, 2, tileSize, tileSize),
+		"StandingLeftTailDown":      spriteAt(1, 2, tileSize, tileSize),
+		"StandingLeftLegUpTailUp":   spriteAt(2, 2, tileSize, tileSize),
+		"StandingLeftLegUpTailDown": spriteAt(3, 2, tileSize, tileSize),
 
-		"StandingLeftTaillUp":       spriteAt(0, 2),
-		"StandingLeftTailDown":      spriteAt(1, 2),
-		"StandingLeftLegUpTailUp":   spriteAt(2, 2),
-		"StandingLeftLegUpTailDown": spriteAt(3, 2),
+		"WalkingForward1": spriteAt(0, 4, tileSize, tileSize),
+		"WalkingForward2": spriteAt(1, 4, tileSize, tileSize),
+		"WalkingForward3": spriteAt(2, 4, tileSize, tileSize),
+		"WalkingForward4": spriteAt(3, 4, tileSize, tileSize),
 
-		"WalkingForward1": spriteAt(0, 4),
-		"WalkingForward2": spriteAt(1, 4),
-		"WalkingForward3": spriteAt(2, 4),
-		"WalkingForward4": spriteAt(3, 4),
+		"WalkingAway1": spriteAt(0, 5, tileSize, tileSize),
+		"WalkingAway2": spriteAt(1, 5, tileSize, tileSize),
+		"WalkingAway3": spriteAt(2, 5, tileSize, tileSize),
+		"WalkingAway4": spriteAt(3, 5, tileSize, tileSize),
 
-		"WalkingAway1": spriteAt(0, 5),
-		"WalkingAway2": spriteAt(1, 5),
-		"WalkingAway3": spriteAt(2, 5),
-		"WalkingAway4": spriteAt(3, 5),
+		"WalkingRight1": spriteAt(0, 6, tileSize, tileSize),
+		"WalkingRight2": spriteAt(1, 6, tileSize, tileSize),
+		"WalkingRight3": spriteAt(2, 6, tileSize, tileSize),
+		"WalkingRight4": spriteAt(3, 6, tileSize, tileSize),
 
-		"WalkingRight1": spriteAt(0, 6),
-		"WalkingRight2": spriteAt(1, 6),
-		"WalkingRight3": spriteAt(2, 6),
-		"WalkingRight4": spriteAt(3, 6),
+		"WalkingLeft1": spriteAt(0, 7, tileSize, tileSize),
+		"WalkingLeft2": spriteAt(1, 7, tileSize, tileSize),
+		"WalkingLeft3": spriteAt(2, 7, tileSize, tileSize),
+		"WalkingLeft4": spriteAt(3, 7, tileSize, tileSize),
 
-		"WalkingLeft1": spriteAt(0, 7),
-		"WalkingLeft2": spriteAt(1, 7),
-		"WalkingLeft3": spriteAt(2, 7),
-		"WalkingLeft4": spriteAt(3, 7),
+		"JumpingLeft1": spriteAt(4, 7, tileSize, tileSize),
+		"JumpingLeft2": spriteAt(5, 7, tileSize, tileSize),
+		"JumpingLeft3": spriteAt(6, 7, tileSize, tileSize),
+		"JumpingLeft4": spriteAt(7, 7, tileSize, tileSize),
 
-		"JumpingLeft1": spriteAt(4, 7),
-		"JumpingLeft2": spriteAt(5, 7),
-		"JumpingLeft3": spriteAt(6, 7),
-		"JumpingLeft4": spriteAt(7, 7),
+		"JumpingRight1": spriteAt(4, 6, tileSize, tileSize),
+		"JumpingRight2": spriteAt(5, 6, tileSize, tileSize),
+		"JumpingRight3": spriteAt(6, 6, tileSize, tileSize),
+		"JumpingRight4": spriteAt(7, 6, tileSize, tileSize),
 
-		"JumpingRight1": spriteAt(4, 6),
-		"JumpingRight2": spriteAt(5, 6),
-		"JumpingRight3": spriteAt(6, 6),
-		"JumpingRight4": spriteAt(7, 6),
+		"JumpingForward1": spriteAt(4, 4, tileSize, tileSize),
+		"JumpingForward2": spriteAt(5, 4, tileSize, tileSize),
+		"JumpingForward3": spriteAt(6, 4, tileSize, tileSize),
+		"JumpingForward4": spriteAt(7, 4, tileSize, tileSize),
 
-		"JumpingForward1": spriteAt(4, 4),
-		"JumpingForward2": spriteAt(5, 4),
-		"JumpingForward3": spriteAt(6, 4),
-		"JumpingForward4": spriteAt(7, 4),
+		"JumpingAway1": spriteAt(4, 5, tileSize, tileSize),
+		"JumpingAway2": spriteAt(5, 5, tileSize, tileSize),
+		"JumpingAway3": spriteAt(6, 5, tileSize, tileSize),
+		"JumpingAway4": spriteAt(7, 5, tileSize, tileSize),
 
-		"JumpingAway1": spriteAt(4, 5),
-		"JumpingAway2": spriteAt(5, 5),
-		"JumpingAway3": spriteAt(6, 5),
-		"JumpingAway4": spriteAt(7, 5),
-
-		"HeadLookingForward": spriteAt(4,0),
+		"HeadLookingForward1": spriteAt(4,0,tileSize, halfTileSize),
+		"HeadLookingForward2": spriteAt(4,1,tileSize, halfTileSize),
+		"HeadLookingForward3": spriteAt(4,2,tileSize, halfTileSize),
+		"HeadLookingBack": spriteAt(5,0,tileSize, halfTileSize),
+		"HeadDownForward": spriteAt(8,0,tileSize, tileSize),
+		"HeadLookingRight": spriteAt(6,0, tileSize, halfTileSize),
 	}
 
 	return s, nil
@@ -179,38 +184,38 @@ func (m *deer) Update() error {
 }
 
 func (m *deer) stayIdle() {
-	m.sprite = "JumpingForward4"
-	// idle state
-	// switch m.state {
-	// case 0:
-	// 	m.state = 1
-	// 	fallthrough
+	if (m.state == "idle") {
+		if m.count - m.lastSpriteCount > rand.Intn(200) + 50 {
+			var random = rand.Intn(15)
+			switch {
+			case 0 < random && random < 2:
+				m.sprite = "StandingFrontTailUp+HeadLookingForward1"
+			case 2 < random && random < 5:
+				m.sprite = "StandingFrontTailDown+HeadLookingForward2"
+			case random > 5 && random < 7:
+				m.sprite = "StandingFrontTailUp+HeadLookingForward2"
+			case random > 7 && random < 9:
+				m.sprite = "StandingFrontLegUpTailUp+HeadLookingRight"
+			case random == 9:
+				m.sprite = "StandingFrontTailDown+HeadDownForward"
+			case random >= 10:
+				m.sprite = "StandingFrontTailUp+HeadLookingBack"
+			}
+		}
 
-	// case 1, 2, 3:
-	// 	m.sprite = "awake"
-
-	// case 4, 5, 6:
-	// 	m.sprite = "scratch"
-
-	// case 7, 8, 9:
-	// 	m.sprite = "wash"
-
-	// case 10, 11, 12:
-	// 	m.min = 32
-	// 	m.max = 64
-	// 	m.sprite = "yawn"
-
-	// default:
-	// 	m.sprite = "sleep"
-	// }
+	} else {
+		m.sprite = "StandingFrontTailDown+HeadLookingForward1"
+		m.state = "idle"
+	}
 }
 
 func (m *deer) catchCursor(x, y int) {
-	// m.state = 0
-	// m.max = 16
-	turn := 0.0
+	m.state = "catchCursor"
+
+
 	// get mouse direction
 	rad := math.Atan2(float64(y), float64(x))
+	turn := 0.0
 	if rad <= 0 {
 		turn = 360
 	}
@@ -241,13 +246,9 @@ func (m *deer) catchCursor(x, y int) {
 	}
 
 
-	var lastSpriteDiff = m.count - m.lastSpriteCount
-
-	var lastSpriteMinDiff = lastSpriteDiff > 5
-	if (lastSpriteMinDiff) {
+	if (m.lastSpriteMinDiff()) {
 		switch {
 		case angle < 292 && angle > 247:
-			// m.state = "WalkingUp"
 			switch m.lastSprite {
 				case "WalkingAway1":
 					m.sprite = "WalkingAway2"
@@ -281,7 +282,6 @@ func (m *deer) catchCursor(x, y int) {
 					m.sprite = "WalkingRight1"
 				}
 		case angle < 67 && angle > 22:
-			// m.sprite = "JumpingRight3"
 			switch m.lastSprite {
 				case "JumpingRight1":
 					m.sprite = "JumpingRight2"
@@ -305,7 +305,6 @@ func (m *deer) catchCursor(x, y int) {
 					m.sprite = "WalkingForward1"
 				}
 		case angle < 157 && angle > 112:
-			// m.sprite = "JumpingLeft3"
 			switch m.lastSprite {
 				case "JumpingLeft1":
 					m.sprite = "JumpingLeft2"
@@ -328,7 +327,6 @@ func (m *deer) catchCursor(x, y int) {
 					m.sprite = "WalkingLeft1"
 				}
 		case angle < 247 && angle > 202:
-			// m.sprite = "JumpingLeft1"
 			switch m.lastSprite {
 				case "JumpingLeft1":
 					m.sprite = "JumpingLeft2"
@@ -344,32 +342,26 @@ func (m *deer) catchCursor(x, y int) {
 
 }
 
+func (m *deer) lastSpriteMinDiff() bool {
+	var lastSpriteDiff = m.count - m.lastSpriteCount
+
+	var lastSpriteMinDiff = lastSpriteDiff > 5
+	return lastSpriteMinDiff
+}
+
 func (m *deer) Draw(screen *ebiten.Image) {
-	// var sprite string
-	// switch {
-	// case m.sprite == "awake":
-	// 	sprite = m.sprite
-	// case m.count < m.min:
-	// 	sprite = m.sprite + "1"
-	// default:
-	// 	sprite = m.sprite + "2"
-	// }
+	screen.Clear()
+	split := strings.Split(m.sprite, "+")
+	if (len(split) > 1) {
+		layer1 := split[0]
+		layer2 := split[1]
+		screen.DrawImage(spriteSheet[layer1], nil)
+		screen.DrawImage(spriteSheet[layer2], nil)
+	} else {
+		m.img = spriteSheet[m.sprite]
+		screen.DrawImage(m.img, nil)
+	}
 
-	m.img = spriteSheet[m.sprite]
-	// m.img = spriteSheet.WalkingForward1
-
-	// if m.count > m.max {
-	// 	m.count = 0
-	// }
-
-	// 	if m.state > 0 {
-	// 		m.state++
-	// 		// switch m.state {
-	// 		// case 13:
-	// 		// 	playSound(mSound["sleep"])
-	// 		// }
-	// 	}
-	// }
 
 	if m.lastSprite == m.sprite {
 		return
@@ -377,11 +369,6 @@ func (m *deer) Draw(screen *ebiten.Image) {
 
 	m.lastSprite = m.sprite
 	m.lastSpriteCount = m.count
-
-
-	screen.Clear()
-
-	screen.DrawImage(m.img, nil)
 }
 
 func main() {
@@ -393,7 +380,6 @@ func main() {
 		x:      monitorWidth / 2,
 		y:      monitorHeight / 2,
 		sprite: "WalkingForward1",
-		max:    200,
 	}
 
 	ebiten.SetRunnableOnUnfocused(true)
