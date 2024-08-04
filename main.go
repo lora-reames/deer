@@ -246,7 +246,7 @@ func (m *deer) catchCursor(x, y int) {
 	}
 
 
-	if (m.lastSpriteMinDiff()) {
+	if (m.lastSpriteMinDiff(5)) {
 		switch {
 		case angle < 292 && angle > 247:
 			switch m.lastSprite {
@@ -342,11 +342,9 @@ func (m *deer) catchCursor(x, y int) {
 
 }
 
-func (m *deer) lastSpriteMinDiff() bool {
+func (m *deer) lastSpriteMinDiff(min int) bool {
 	var lastSpriteDiff = m.count - m.lastSpriteCount
-
-	var lastSpriteMinDiff = lastSpriteDiff > 5
-	return lastSpriteMinDiff
+	return lastSpriteDiff > min
 }
 
 func (m *deer) Draw(screen *ebiten.Image) {
