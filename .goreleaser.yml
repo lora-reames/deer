@@ -1,3 +1,6 @@
 # .goreleaser.yml
-universal_binaries:
-  - replace: true
+builds:
+    goos:
+    - linux
+    - windows
+    - freebsd
