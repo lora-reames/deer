@@ -1,5 +1,0 @@
-# .goreleaser.yml
-builds:
-  goos:
-      - freebsd
-      - windows
