@@ -13,6 +13,7 @@ permissions:
   packages: write
   # issues: write
 
+
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
